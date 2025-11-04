@@ -27,6 +27,16 @@ export const createProduct = createAsyncThunk(
   }
 );
 
+export const updateProduct = createAsyncThunk("products/updateProduct", async (product: Product) => {
+  const response = await api.put<Product[]>(`products?id=eq.${product.id}`, product);
+  return response.data[0];
+});
+
+export const deleteProduct = createAsyncThunk("products/deleteProduct", async (productId: string) => {
+  await api.delete(`products?id=eq.${productId}`);
+  return productId;
+});
+
 const productsSlice = createSlice({
   name: "products",
   initialState,
@@ -46,16 +56,17 @@ const productsSlice = createSlice({
         state.error = action.error.message || "Error al cargar productos";
       })
       // CREATE
-      .addCase(createProduct.pending, (state) => {
-        state.loading = true;
-      })
       .addCase(createProduct.fulfilled, (state, action) => {
-        state.loading = false;
         state.list.unshift(action.payload);
       })
-      .addCase(createProduct.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.error.message || "Error al crear producto";
+      // UPDATE
+      .addCase(updateProduct.fulfilled, (state, action) => {
+        const i = state.list.findIndex((p) => p.id === action.payload.id);
+        if (i !== -1) state.list[i] = action.payload;
+      })
+      // DELETE
+      .addCase(deleteProduct.fulfilled, (state, action) => {
+        state.list = state.list.filter((p) => p.id !== action.payload);
       });
   },
 });
