@@ -19,15 +19,23 @@ export const fetchProducts = createAsyncThunk("products/fetchProducts", async ()
   return response.data;
 });
 
+export const createProduct = createAsyncThunk(
+  "products/createProduct",
+  async (newProduct: Omit<Product, "id" | "created_at">) => {
+    const response = await api.post<Product[]>("products", newProduct);
+    return response.data[0];
+  }
+);
+
 const productsSlice = createSlice({
   name: "products",
   initialState,
   reducers: {},
   extraReducers: (builder) => {
     builder
+      // FETCH
       .addCase(fetchProducts.pending, (state) => {
         state.loading = true;
-        state.error = null;
       })
       .addCase(fetchProducts.fulfilled, (state, action) => {
         state.loading = false;
@@ -36,6 +44,18 @@ const productsSlice = createSlice({
       .addCase(fetchProducts.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || "Error al cargar productos";
+      })
+      // CREATE
+      .addCase(createProduct.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(createProduct.fulfilled, (state, action) => {
+        state.loading = false;
+        state.list.unshift(action.payload);
+      })
+      .addCase(createProduct.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || "Error al crear producto";
       });
   },
 });
